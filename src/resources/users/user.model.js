@@ -1,16 +1,24 @@
 import { v4 as uuidv4 } from 'uuid';
 
 class User {
-  constructor({ id = uuidv4(), name = 'USER', login = 'user', password = 'P@55w0rd' } = {}) {
+  constructor({
+    id = uuidv4(),
+    email = '',
+    name = '',
+    password = '',
+    salt = '',
+  } = {}) {
     this.id = id;
+    this.email = email;
     this.name = name;
-    this.login = login;
     this.password = password;
+    this.salt = salt;
   }
 
   static toResponse(user) {
-    const { id, name, login } = user;
-    return { id, name, login };
+    if (!user) return null;
+    const { id, email, name } = user;
+    return { id, email, name };
   }
 }
 
