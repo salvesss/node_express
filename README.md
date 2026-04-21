@@ -1,6 +1,18 @@
+<<<<<<< Updated upstream
 # Запуск
 
 npm start
+=======
+# Запуск (TypeScript)
+
+npm install
+npm run dev
+
+# Сборка
+
+npm run build
+npm run serve
+>>>>>>> Stashed changes
 
 # Создать пользователя
 
