@@ -1,43 +1,27 @@
-# basic-nodejs-mitso
+# Запуск (TypeScript)
 
-## Prerequisites
-
-- Git - [Download & Install Git](https://git-scm.com/downloads).
-- Node.js - [Download & Install Node.js](https://nodejs.org/en/download/) and the npm package
-  manager.
-
-## Downloading
-
-```
-git clone {repository URL}
-```
-
-## Installing NPM modules
-
-```
 npm install
-```
+npm run dev
 
-## Running application
+# Сборка
 
-```
-npm start
-```
+npm run build
+npm run serve
 
-## Development
+# Создать пользователя
 
-If you're using VSCode, you can get a better developer experience from integration with
-[ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) and
-[Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) extensions.
+POST http://localhost:4000/users
 
-### Auto-fix and format
+{ "email": "user@gmail.com", "name": "Лёха", "password": "228" }
 
-```
-npm run lint
-```
+# Создать пост
 
-### Debugging in VSCode
+POST http://localhost:4000/posts
 
-Press <kbd>F5</kbd> to debug.
+{ "title": "Заголовок", "text": "Текст поста", "userId": "ВАШ-UUID" }
 
-For more information, visit: https://code.visualstudio.com/docs/editor/debugging
+# Создать коммент
+
+POST http://localhost:4000/comments
+
+{ "text": "Комментарий", "userId": "ВАШ-UUID", "postId": "UUID-ПОСТА" }
