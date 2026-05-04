@@ -1,0 +1,30 @@
+# Dependencies (install inside image)
+node_modules
+npm-debug.log*
+
+# Build output (built in Dockerfile when needed)
+dist
+
+# Local logs (persist via named volume in compose)
+logs
+
+# Git and IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Environment (inject via env_file / Compose, do not bake into image)
+.env
+.env.*
+!.env.example
+
+# Docs and CI noise
+*.md
+.dockerignore
+
+# Tests / coverage (not required in runtime image)
+coverage
+test
+**/*.test.ts
+**/*.spec.ts
