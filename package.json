@@ -46,10 +46,13 @@
     "cross-env": "^7.0.3",
     "dotenv": "^9.0.0",
     "express": "^4.17.1",
-    "uuid": "^8.3.2"
+    "morgan": "^1.10.1",
+    "uuid": "^8.3.2",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^24.8.1",
     "@types/uuid": "^10.0.0",
     "debug": "^4.3.1",
