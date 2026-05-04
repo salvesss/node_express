@@ -1,49 +1,107 @@
-import { comments } from '../../common/inMemoryStore.js';
 import type { CommentEntity } from '../../common/types.js';
+import { prisma } from '../../common/prisma.js';
 
-const getAll = async (): Promise<CommentEntity[]> => [...comments];
-const getById = async (id: string): Promise<CommentEntity | undefined> => comments.find((c) => c.id === id);
-const getByUserId = async (userId: string): Promise<CommentEntity[]> =>
-  comments.filter((c) => c.userId === userId);
-const getByPostId = async (postId: string): Promise<CommentEntity[]> =>
-  comments.filter((c) => c.postId === postId);
+const toCommentEntity = (c: {
+  id: string;
+  text: string;
+  createdAt: Date;
+  userId: string;
+  postId: string;
+}): CommentEntity => ({
+  id: c.id,
+  text: c.text,
+  createdAt: c.createdAt.getTime(),
+  userId: c.userId,
+  postId: c.postId,
+});
+
+const getAll = async (): Promise<CommentEntity[]> => {
+  const comments = await prisma.comment.findMany({
+    select: { id: true, text: true, createdAt: true, userId: true, postId: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  return comments.map(toCommentEntity);
+};
+
+const getById = async (id: string): Promise<CommentEntity | undefined> => {
+  const comment = await prisma.comment.findUnique({
+    where: { id },
+    select: { id: true, text: true, createdAt: true, userId: true, postId: true },
+  });
+  return comment ? toCommentEntity(comment) : undefined;
+};
+
+const getByUserId = async (userId: string): Promise<CommentEntity[]> => {
+  const comments = await prisma.comment.findMany({
+    where: { userId },
+    select: { id: true, text: true, createdAt: true, userId: true, postId: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  return comments.map(toCommentEntity);
+};
+
+const getByPostId = async (postId: string): Promise<CommentEntity[]> => {
+  const comments = await prisma.comment.findMany({
+    where: { postId },
+    select: { id: true, text: true, createdAt: true, userId: true, postId: true },
+    orderBy: { createdAt: 'desc' },
+  });
+  return comments.map(toCommentEntity);
+};
 
 const create = async (comment: CommentEntity): Promise<CommentEntity> => {
-  comments.push(comment);
-  return comment;
+  const created = await prisma.comment.create({
+    data: {
+      id: comment.id,
+      text: comment.text,
+      userId: comment.userId,
+      postId: comment.postId,
+      createdAt: new Date(comment.createdAt),
+    },
+    select: { id: true, text: true, createdAt: true, userId: true, postId: true },
+  });
+  return toCommentEntity(created);
 };
 
 const update = async (id: string, patch: Partial<CommentEntity>): Promise<CommentEntity | null> => {
-  const idx = comments.findIndex((c) => c.id === id);
-  if (idx === -1) return null;
-  comments[idx] = { ...comments[idx], ...patch };
-  return comments[idx];
+  try {
+    const updated = await prisma.comment.update({
+      where: { id },
+      data: {
+        text: patch.text,
+        userId: patch.userId,
+        postId: patch.postId,
+      },
+      select: { id: true, text: true, createdAt: true, userId: true, postId: true },
+    });
+    return toCommentEntity(updated);
+  } catch {
+    return null;
+  }
 };
 
 const remove = async (id: string): Promise<CommentEntity | null> => {
-  const idx = comments.findIndex((c) => c.id === id);
-  if (idx === -1) return null;
-  const [removed] = comments.splice(idx, 1);
-  return removed;
+  try {
+    const removed = await prisma.comment.delete({
+      where: { id },
+      select: { id: true, text: true, createdAt: true, userId: true, postId: true },
+    });
+    return toCommentEntity(removed);
+  } catch {
+    return null;
+  }
 };
 
 const removeByPostId = async (postId: string): Promise<void> => {
-  for (let i = comments.length - 1; i >= 0; i -= 1) {
-    if (comments[i].postId === postId) comments.splice(i, 1);
-  }
+  await prisma.comment.deleteMany({ where: { postId } });
 };
 
 const removeByPostIds = async (postIds: string[]): Promise<void> => {
-  const set = new Set(postIds);
-  for (let i = comments.length - 1; i >= 0; i -= 1) {
-    if (set.has(comments[i].postId)) comments.splice(i, 1);
-  }
+  await prisma.comment.deleteMany({ where: { postId: { in: postIds } } });
 };
 
 const removeByUserId = async (userId: string): Promise<void> => {
-  for (let i = comments.length - 1; i >= 0; i -= 1) {
-    if (comments[i].userId === userId) comments.splice(i, 1);
-  }
+  await prisma.comment.deleteMany({ where: { userId } });
 };
 
 export { getAll, getById, getByUserId, getByPostId, create, update, remove, removeByPostId, removeByPostIds, removeByUserId };

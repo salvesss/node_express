@@ -1,22 +1,66 @@
-import { users } from '../../common/inMemoryStore.js';
-const getAll = async () => [...users];
-const getById = async (id) => users.find((u) => u.id === id);
+import { prisma } from '../../common/prisma.js';
+const toUserEntity = (u) => ({
+    id: u.id,
+    email: u.email,
+    name: u.name,
+    password: u.password,
+    salt: u.salt,
+});
+const getAll = async () => {
+    const users = await prisma.user.findMany({
+        select: { id: true, email: true, name: true, password: true, salt: true },
+        orderBy: { createdAt: 'desc' },
+    });
+    return users.map(toUserEntity);
+};
+const getById = async (id) => {
+    const user = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true, email: true, name: true, password: true, salt: true },
+    });
+    return user ? toUserEntity(user) : undefined;
+};
 const create = async (user) => {
-    users.push(user);
-    return user;
+    const created = await prisma.user.create({
+        data: {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            password: user.password,
+            salt: user.salt,
+        },
+        select: { id: true, email: true, name: true, password: true, salt: true },
+    });
+    return toUserEntity(created);
 };
 const update = async (id, patch) => {
-    const idx = users.findIndex((u) => u.id === id);
-    if (idx === -1)
+    try {
+        const updated = await prisma.user.update({
+            where: { id },
+            data: {
+                email: patch.email,
+                name: patch.name,
+                password: patch.password,
+                salt: patch.salt,
+            },
+            select: { id: true, email: true, name: true, password: true, salt: true },
+        });
+        return toUserEntity(updated);
+    }
+    catch {
         return null;
-    users[idx] = { ...users[idx], ...patch };
-    return users[idx];
+    }
 };
 const remove = async (id) => {
-    const idx = users.findIndex((u) => u.id === id);
-    if (idx === -1)
+    try {
+        const removed = await prisma.user.delete({
+            where: { id },
+            select: { id: true, email: true, name: true, password: true, salt: true },
+        });
+        return toUserEntity(removed);
+    }
+    catch {
         return null;
-    const [removed] = users.splice(idx, 1);
-    return removed;
+    }
 };
 export { getAll, getById, create, update, remove };

@@ -1,30 +1,83 @@
-import { posts } from '../../common/inMemoryStore.js';
-const getAll = async () => [...posts];
-const getById = async (id) => posts.find((p) => p.id === id);
-const getByUserId = async (userId) => posts.filter((p) => p.userId === userId);
-const getIdsByUserId = async (userId) => posts.filter((p) => p.userId === userId).map((p) => p.id);
+import { prisma } from '../../common/prisma.js';
+const toPostEntity = (p) => ({
+    id: p.id,
+    title: p.title,
+    text: p.text,
+    createdAt: p.createdAt.getTime(),
+    userId: p.userId,
+});
+const getAll = async () => {
+    const posts = await prisma.post.findMany({
+        select: { id: true, title: true, text: true, createdAt: true, userId: true },
+        orderBy: { createdAt: 'desc' },
+    });
+    return posts.map(toPostEntity);
+};
+const getById = async (id) => {
+    const post = await prisma.post.findUnique({
+        where: { id },
+        select: { id: true, title: true, text: true, createdAt: true, userId: true },
+    });
+    return post ? toPostEntity(post) : undefined;
+};
+const getByUserId = async (userId) => {
+    const posts = await prisma.post.findMany({
+        where: { userId },
+        select: { id: true, title: true, text: true, createdAt: true, userId: true },
+        orderBy: { createdAt: 'desc' },
+    });
+    return posts.map(toPostEntity);
+};
+const getIdsByUserId = async (userId) => {
+    const posts = await prisma.post.findMany({
+        where: { userId },
+        select: { id: true },
+    });
+    return posts.map((p) => p.id);
+};
 const create = async (post) => {
-    posts.push(post);
-    return post;
+    const created = await prisma.post.create({
+        data: {
+            id: post.id,
+            title: post.title,
+            text: post.text,
+            userId: post.userId,
+            createdAt: new Date(post.createdAt),
+        },
+        select: { id: true, title: true, text: true, createdAt: true, userId: true },
+    });
+    return toPostEntity(created);
 };
 const update = async (id, patch) => {
-    const idx = posts.findIndex((p) => p.id === id);
-    if (idx === -1)
+    try {
+        const updated = await prisma.post.update({
+            where: { id },
+            data: {
+                title: patch.title,
+                text: patch.text,
+                userId: patch.userId,
+            },
+            select: { id: true, title: true, text: true, createdAt: true, userId: true },
+        });
+        return toPostEntity(updated);
+    }
+    catch {
         return null;
-    posts[idx] = { ...posts[idx], ...patch };
-    return posts[idx];
+    }
 };
 const remove = async (id) => {
-    const idx = posts.findIndex((p) => p.id === id);
-    if (idx === -1)
+    try {
+        const removed = await prisma.post.delete({
+            where: { id },
+            select: { id: true, title: true, text: true, createdAt: true, userId: true },
+        });
+        return toPostEntity(removed);
+    }
+    catch {
         return null;
-    const [removed] = posts.splice(idx, 1);
-    return removed;
+    }
 };
 const removeByUserId = async (userId) => {
-    for (let i = posts.length - 1; i >= 0; i -= 1) {
-        if (posts[i].userId === userId)
-            posts.splice(i, 1);
-    }
+    await prisma.post.deleteMany({ where: { userId } });
 };
 export { getAll, getById, getByUserId, getIdsByUserId, create, update, remove, removeByUserId };

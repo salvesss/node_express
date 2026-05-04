@@ -20,6 +20,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
 
   app:
     build:
@@ -31,6 +33,7 @@ services:
       PORT: ${APP_PORT:-4000}
       NODE_ENV: ${NODE_ENV:-development}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: ${DATABASE_URL}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -42,8 +45,9 @@ services:
     ports:
       - '${APP_PORT:-4000}:${APP_PORT:-4000}'
     volumes:
-      # Hot reload: правки в ./src перезапускают nodemon в контейнере
-      - ./src:/usr/src/app/src
+      # В dev режиме монтируем весь проект, чтобы миграции можно было запускать в контейнере.
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
       - app_logs:/usr/src/app/logs
     networks:
       - app_net
