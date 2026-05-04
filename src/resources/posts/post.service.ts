@@ -1,0 +1,52 @@
+import type { PostEntity } from '../../common/types.js';
+import Post from './post.model.js';
+import * as postsRepo from './post.memory.repository.js';
+import * as usersRepo from '../users/user.memory.repository.js';
+import * as commentsRepo from '../comments/comment.memory.repository.js';
+
+const getAll = () => postsRepo.getAll();
+const getById = (id: string) => postsRepo.getById(id);
+
+const getAuthor = (postId: string) =>
+  postsRepo.getById(postId).then(async (post) => {
+    if (!post) return null;
+    return usersRepo.getById(post.userId);
+  });
+
+const getComments = (postId: string) => commentsRepo.getByPostId(postId);
+
+type ServiceError = { error: 'USER_NOT_FOUND' };
+
+const create = async ({
+  title,
+  text,
+  userId,
+}: Pick<PostEntity, 'title' | 'text' | 'userId'>): Promise<PostEntity | ServiceError> => {
+  const user = await usersRepo.getById(userId);
+  if (!user) return { error: 'USER_NOT_FOUND' };
+  const post = new Post({ title, text, userId });
+  return postsRepo.create(post);
+};
+
+const update = async (
+  id: string,
+  patch: Partial<Pick<PostEntity, 'title' | 'text' | 'userId'>>,
+): Promise<PostEntity | ServiceError | null> => {
+  const existing = await postsRepo.getById(id);
+  if (!existing) return null;
+  if (patch.userId !== undefined) {
+    const user = await usersRepo.getById(patch.userId);
+    if (!user) return { error: 'USER_NOT_FOUND' };
+  }
+  return postsRepo.update(id, patch);
+};
+
+const remove = async (id: string) => {
+  const existing = await postsRepo.getById(id);
+  if (!existing) return null;
+  await commentsRepo.removeByPostId(id);
+  await postsRepo.remove(id);
+  return existing;
+};
+
+export { getAll, getById, getAuthor, getComments, create, update, remove };
